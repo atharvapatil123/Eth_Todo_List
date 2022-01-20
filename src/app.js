@@ -14,6 +14,7 @@ App = {
     if (typeof web3 !== "undefined") {
       App.web3Provider = web3.currentProvider;
       web3 = new Web3(web3.currentProvider);
+      web3.eth.defaultAccount = web3.eth.accounts[0];
     } else {
       window.alert("Please connect to Metamask.");
     }
@@ -55,19 +56,19 @@ App = {
 
   loadAccount: async () => {
     App.account = await web3.eth.accounts[0];
-    console.log("Here", App.account)
+    console.log("Here", App.account);
   },
 
   loadContract: async () => {
     // Create a JavaScript version of the smart contract
     const todoList = await $.getJSON("TodoList.json");
-    console.log("todolist: ", todoList)
+    console.log("todolist: ", todoList);
     App.contracts.TodoList = await TruffleContract(todoList);
     App.contracts.TodoList.setProvider(App.web3Provider);
 
     // Hydrate the smart contract with values from the blockchain
     App.todoList = await App.contracts.TodoList.deployed();
-    console.log("App.todolist", App.todoList)
+    console.log("App.todolist", App.todoList);
   },
 
   render: async () => {
@@ -123,7 +124,6 @@ App = {
         .prop("name", taskId)
         .prop("checked", taskCompleted)
         .on("click", App.toggleCompleted);
-        
 
       // Put the task in the correct list
       if (taskCompleted) {
@@ -137,7 +137,19 @@ App = {
     }
   },
 
-
+  createTask: async () => {
+    App.setLoading(true);
+    const content = await $("#newTask").val();
+    console.log("content", content);
+    await App.todoList.createTask(content);
+    window.location.reload();
+  },
+  toggleCompleted: async (e) => {
+    App.setLoading(true);
+    const taskId = e.target.name;
+    await App.todoList.toggleCompleted(taskId);
+    window.location.reload();
+  },
 };
 
 $(() => {
